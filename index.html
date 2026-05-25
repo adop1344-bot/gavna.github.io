@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>3D КВЕСТ - ПРОКЛЯТЫЕ КРИСТАЛЛЫ | ХОРРОР КВЕСТ</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Courier New', monospace;
+        }
+        #info {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0,0,0,0.75);
+            color: #ffcc00;
+            padding: 12px 20px;
+            border-radius: 8px;
+            backdrop-filter: blur(4px);
+            pointer-events: none;
+            z-index: 10;
+            border-left: 4px solid #ff5500;
+            font-weight: bold;
+            text-shadow: 1px 1px 0 #000;
+            box-shadow: 0 0 15px rgba(0,0,0,0.5);
+        }
+        #quest-log {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.8);
+            color: #0f0;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: bold;
+            font-family: monospace;
+            pointer-events: none;
+            z-index: 10;
+            border-right: 3px solid #ffaa00;
+            text-align: right;
+            backdrop-filter: blur(4px);
+        }
+        #controls-guide {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0,0,0,0.6);
+            color: #ccc;
+            padding: 8px 15px;
+            border-radius: 8px;
+            font-size: 14px;
+            pointer-events: none;
+            z-index: 10;
+            font-family: monospace;
+        }
+        #notification {
+            position: absolute;
+            bottom: 30%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.85);
+            color: #ffaa44;
+            padding: 12px 24px;
+            border-radius: 40px;
+            font-size: 20px;
+            font-weight: bold;
+            text-align: center;
+            pointer-events: none;
+            z-index: 20;
+            transition: opacity 0.3s;
+            white-space: nowrap;
+            font-family: monospace;
+            border: 1px solid #ffaa44;
+            backdrop-filter: blur(8px);
+        }
+        #jumpscare-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: black;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.08s ease;
+            background: radial-gradient(circle, #aa0000, #220000);
+        }
+        #jumpscare-image {
+            font-size: 120px;
+            font-weight: bold;
+            color: red;
+            text-shadow: 0 0 20px darkred;
+            font-family: Impact, fantasy;
+            animation: shake 0.2s infinite;
+        }
+        @keyframes shake {
+            0% { transform: translate(1px, 1px); }
+            100% { transform: translate(-1px, -1px); }
+        }
+        #start-panel {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 200;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-family: monospace;
+            backdrop-filter: blur(10px);
+            cursor: pointer;
+            text-align: center;
+        }
+        #start-panel h1 {
+            font-size: 48px;
+            color: #ff5500;
+            text-shadow: 0 0 20px red;
+        }
+        #start-panel p {
+            font-size: 20px;
+            margin: 10px;
+        }
+        #start-panel button {
+            margin-top: 30px;
+            padding: 12px 30px;
+            font-size: 24px;
+            background: #ff5500;
+            border: none;
+            color: black;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: 0.2s;
+            font-family: monospace;
+        }
+        #start-panel button:hover {
+            background: #ffaa00;
+            transform: scale(1.05);
+            box-shadow: 0 0 20px orange;
+        }
+        .victory {
+            color: gold;
+            font-size: 32px;
+            text-shadow: 0 0 10px lime;
+        }
+    </style>
+</head>
+<body>
+    <div id="info">
+        🔮 ПРОКЛЯТЫЙ МАВЗОЛЕЙ 🔮
+    </div>
+    <div id="quest-log">
+        📜 КВЕСТ:<br>
+        🌟 СОБЕРИ КРИСТАЛЛЫ: <span id="crystals-count">0</span>/3
+    </div>
+    <div id="controls-guide">
+        🕹️ WASD - движение | 🖱️ МЫШЬ - осмотр | 🔍 Подойди к кристаллам
+    </div>
+    <div id="notification" style="opacity:0;">✨ Уведомление</div>
+    <div id="jumpscare-overlay">
+        <div id="jumpscare-image">👹 ТЫ НАРУШИЛ ЗАПРЕТ! 👹</div>
+    </div>
+    <div id="start-panel">
+        <h1>🔪 ПРОКЛЯТЫЕ КРИСТАЛЛЫ 🔪</h1>
+        <p>➤ Собери 3 древних кристалла, чтобы снять проклятие</p>
+        <p>⚠️ ОСТЕРЕГАЙСЯ: запретные зоны вызывают УЖАС ⚠️</p>
+        <p>🎧 РЕКОМЕНДУЕМ НАДЕТЬ НАУШНИКИ (скримеры)</p>
+        <button id="start-btn">⚔️ НАЧАТЬ ИГРУ ⚔️</button>
+        <p style="margin-top:30px; font-size:12px;">[После клика заблокируется курсор - игра от первого лица]</p>
+    </div>
+
+    <!-- Import Three.js core and add-ons -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.128.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.128.0/examples/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
+
+        // --- ИНИЦИАЛИЗАЦИЯ СЦЕНЫ С ОПТИМИЗАЦИЕЙ ---
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x030318);
+        scene.fog = new THREE.FogExp2(0x030318, 0.025); // туман для производительности и атмосферы
+        
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.y = 1.6; // рост персонажа
+        
+        const renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: "high-performance" });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true; // тени но ограничим
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        document.body.appendChild(renderer.domElement);
+        
+        // --- ОПТИМИЗАЦИЯ: ограничение теней, только важные объекты ---
+        
+        // --- УПРАВЛЕНИЕ С БЛОКИРОВКОЙ МЫШИ ---
+        const controls = new PointerLockControls(camera, document.body);
+        const moveState = { forward: false, backward: false, left: false, right: false };
+        let playerVelocity = new THREE.Vector3(0, 0, 0);
+        let playerSpeed = 4.5;
+        
+        // Обработка нажатий клавиш
+        window.addEventListener('keydown', (e) => {
+            switch(e.code) {
+                case 'KeyW': moveState.forward = true; break;
+                case 'KeyS': moveState.backward = true; break;
+                case 'KeyA': moveState.left = true; break;
+                case 'KeyD': moveState.right = true; break;
+                default: break;
+            }
+        });
+        window.addEventListener('keyup', (e) => {
+            switch(e.code) {
+                case 'KeyW': moveState.forward = false; break;
+                case 'KeyS': moveState.backward = false; break;
+                case 'KeyA': moveState.left = false; break;
+                case 'KeyD': moveState.right = false; break;
+                default: break;
+            }
+        });
+        
+        // --- МИР: ПОЛ И СТЕНЫ (низкополигональный уровень) ---
+        // Пол (прозрачная текстура, но с сеткой для стиля)
+        const floorMat = new THREE.MeshStandardMaterial({ color: 0x2a1e2c, roughness: 0.8, metalness: 0.1 });
+        const floor = new THREE.Mesh(new THREE.PlaneGeometry(28, 28), floorMat);
+        floor.rotation.x = -Math.PI / 2;
+        floor.position.y = -0.05;
+        floor.receiveShadow = true;
+        scene.add(floor);
+        
+        // Сетка-репер для стиля (опционально, не нагружает)
+        const gridHelper = new THREE.GridHelper(30, 20, 0xaa88ff, 0x442266);
+        gridHelper.position.y = -0.03;
+        scene.add(gridHelper);
+        
+        // Стены и колонны (массив коллизий)
+        const walls = [];
+        
+        function addWall(x, z, width, height, depth, color = 0x3c2a3e) {
+            const wallMat = new THREE.MeshStandardMaterial({ color: color, roughness: 0.5, metalness: 0.1 });
+            const wall = new THREE.Mesh(new THREE.BoxGeometry(width, height, depth), wallMat);
+            wall.position.set(x, height/2, z);
+            wall.receiveShadow = true;
+            wall.castShadow = true;
+            scene.add(wall);
+            walls.push({
+                pos: new THREE.Vector3(x, 0, z),
+                size: new THREE.Vector3(width, height, depth),
+                halfSize: new THREE.Vector3(width/2, height/2, depth/2)
+            });
+        }
+        
+        // Внешние стены (периметр)
+        addWall(0, -13.5, 28, 3, 1, 0x2a1e2c);
+        addWall(0, 13.5, 28, 3, 1, 0x2a1e2c);
+        addWall(-13.5, 0, 1, 3, 28, 0x2a1e2c);
+        addWall(13.5, 0, 1, 3, 28, 0x2a1e2c);
+        
+        // Внутренние стены (лабиринт + колонны)
+        addWall(-4, -5, 1.2, 2.5, 3.5, 0x5a3e5e);
+        addWall(2, -4, 1.2, 2.5, 4, 0x5a3e5e);
+        addWall(6, 1, 1, 2.5, 5, 0x5a3e5e);
+        addWall(-1, 6, 5, 2.5, 1, 0x5a3e5e);
+        addWall(-6, 7, 1.2, 2.5, 4, 0x5a3e5e);
+        addWall(8, -3, 1, 2.5, 4, 0x5a3e5e);
+        addWall(3, 8, 4, 2.5, 1, 0x5a3e5e);
+        addWall(-7, -2, 1.2, 2.5, 5, 0x5a3e5e);
+        addWall(0, -9, 5, 2.5, 1, 0x5a3e5e);
+        addWall(-2, 10, 6, 2.5, 1, 0x5a3e5e);
+        addWall(9, 9, 1, 2.5, 4, 0x5a3e5e);
+        
+        // Добавим несколько мрачных колонн для атмосферы (тоже коллизия)
+        const pillars = [[-9, -8], [8, -7], [-8, 9], [9, 5], [-5, -10], [5, -9]];
+        pillars.forEach(([x, z]) => {
+            const pillarMat = new THREE.MeshStandardMaterial({ color: 0x4a2c4a, emissive: 0x1a0a1a });
+            const pillar = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.6, 2.2, 8), pillarMat);
+            pillar.position.set(x, 1.1, z);
+            pillar.castShadow = true;
+            pillar.receiveShadow = true;
+            scene.add(pillar);
+            walls.push({
+                pos: new THREE.Vector3(x, 0, z),
+                size: new THREE.Vector3(1, 2.2, 1),
+                halfSize: new THREE.Vector3(0.5, 1.1, 0.5)
+            });
+        });
+        
+        // --- ДЕКОРАТИВНЫЕ ЭЛЕМЕНТЫ: факелы (свет) ---
+        const firePositions = [[-8, -7], [7, -6], [-6, 8], [8, 8], [-3, -9], [4, 10]];
+        firePositions.forEach(([x, z]) => {
+            const light = new THREE.PointLight(0xff6600, 0.6, 12);
+            light.position.set(x, 1.8, z);
+            light.castShadow = false; // тени отключены для оптимизации
+            scene.add(light);
+            // маленькая сфера эффект
+            const fireGlow = new THREE.Mesh(new THREE.SphereGeometry(0.2, 6, 6), new THREE.MeshStandardMaterial({ color: 0xff4400, emissive: 0x442200 }));
+            fireGlow.position.set(x, 1.5, z);
+            scene.add(fireGlow);
+        });
+        
+        // --- ОСВЕЩЕНИЕ (настроено для атмосферы и производительности) ---
+        const ambientLight = new THREE.AmbientLight(0x221c2a);
+        scene.add(ambientLight);
+        const mainLight = new THREE.DirectionalLight(0xffccaa, 1.2);
+        mainLight.position.set(5, 12, 4);
+        mainLight.castShadow = true;
+        mainLight.receiveShadow = false;
+        mainLight.shadow.mapSize.width = 512;
+        mainLight.shadow.mapSize.height = 512;
+        scene.add(mainLight);
+        const fillLight = new THREE.PointLight(0x664477, 0.5);
+        fillLight.position.set(-3, 5, 2);
+        scene.add(fillLight);
+        const backLight = new THREE.PointLight(0x335588, 0.4);
+        backLight.position.set(0, 3, -6);
+        scene.add(backLight);
+        
+        // --- КВЕСТ: КРИСТАЛЛЫ (3 штуки) ---
+        const crystals = [];
+        const crystalPositions = [
+            { x: -5.5, z: -7.2, color: 0xff44aa },
+            { x: 7.2, z: -2.5, color: 0x44ffaa },
+            { x: -2.8, z: 8.5, color: 0xaa44ff }
+        ];
+        
+        // Функция создания кристалла (геометрия октаэдр для крутости)
+        crystalPositions.forEach((pos, idx) => {
+            const crystalMat = new THREE.MeshStandardMaterial({ color: pos.color, emissive: 0x331133, emissiveIntensity: 0.5, metalness: 0.8, roughness: 0.2 });
+            const crystalGeo = new THREE.OctahedronGeometry(0.55);
+            const crystal = new THREE.Mesh(crystalGeo, crystalMat);
+            crystal.position.set(pos.x, 0.7, pos.z);
+            crystal.castShadow = true;
+            crystal.userData = { id: idx, collected: false, floatOffset: Math.random() * Math.PI * 2 };
+            scene.add(crystal);
+            crystals.push(crystal);
+        });
+        
+        // --- ЗОНЫ ТРИГГЕРОВ ДЛЯ ПОСШАЛОК (скримеры) ---
+        const scareZones = [
+            { pos: new THREE.Vector3(-2, 0, -8.5), radius: 1.8, triggered: false, message: "Духи атакуют!" },
+            { pos: new THREE.Vector3(7, 0, 7.2), radius: 1.8, triggered: false, message: "Леденящий крик!" },
+            { pos: new THREE.Vector3(-7.5, 0, 5), radius: 1.6, triggered: false, message: "Мертвец схватил!" }
+        ];
+        
+        // ---- ЗВУКОВАЯ СИСТЕМА (синтез скримера) ----
+        let audioCtx = null;
+        let isAudioEnabled = false;
+        
+        function initAudio() {
+            if (audioCtx) return;
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            isAudioEnabled = true;
+        }
+        
+        function playScareSound() {
+            if (!isAudioEnabled || !audioCtx) return;
+            // Сброс контекста если suspended
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            const now = audioCtx.currentTime;
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            oscillator.type = 'sawtooth';
+            oscillator.frequency.setValueAtTime(880, now);
+            oscillator.frequency.exponentialRampToValueAtTime(180, now + 0.4);
+            gainNode.gain.setValueAtTime(0.45, now);
+            gainNode.gain.exponentialRampToValueAtTime(0.0001, now + 1.2);
+            oscillator.start();
+            oscillator.stop(now + 1.1);
+            // дополнительный шум
+            const noiseNode = audioCtx.createBufferSource();
+            const bufferSize = 2048;
+            const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 0.4;
+            noiseNode.buffer = buffer;
+            const noiseGain = audioCtx.createGain();
+            noiseNode.connect(noiseGain);
+            noiseGain.connect(audioCtx.destination);
+            noiseGain.gain.setValueAtTime(0.25, now);
+            noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.7);
+            noiseNode.start();
+            noiseNode.stop(now + 0.65);
+        }
+        
+        // Функция скримера с эффектами
+        let isScaring = false;
+        let scareTimeout = null;
+        function triggerJumpScare(causeMessage) {
+            if (isScaring) return;
+            isScaring = true;
+            // Визуальный оверлей
+            const overlay = document.getElementById('jumpscare-overlay');
+            const imgDiv = document.getElementById('jumpscare-image');
+            imgDiv.innerHTML = `💀 ${causeMessage} 💀`;
+            overlay.style.opacity = '1';
+            playScareSound();
+            // Тряска камеры (дрожание)
+            const originalY = camera.position.y;
+            let shakeIntensity = 0.08;
+            let shakeTime = 0;
+            const shakeInterval = setInterval(() => {
+                if (shakeTime > 0.45) {
+                    clearInterval(shakeInterval);
+                    camera.position.y = originalY;
+                    return;
+                }
+                camera.position.y = originalY + (Math.random() - 0.5) * shakeIntensity;
+                shakeTime += 0.03;
+                shakeIntensity *= 0.85;
+            }, 20);
+            
+            setTimeout(() => {
+                overlay.style.opacity = '0';
+                setTimeout(() => { isScaring = false; }, 300);
+            }, 550);
+            // Показать уведомление
+            showNotif(`⚠️ ${causeMessage} ⚠️`, 1800);
+        }
+        
+        // Уведомления
+        let notifTimeout = null;
+        function showNotif(msg, duration = 2000) {
+            const notif = document.getElementById('notification');
+            notif.innerText = msg;
+            notif.style.opacity = '1';
+            if (notifTimeout) clearTimeout(notifTimeout);
+            notifTimeout = setTimeout(() => {
+                notif.style.opacity = '0';
+            }, duration);
+        }
+        
+        // Квест система
+        let collectedCrystals = 0;
+        let questCompleted = false;
+        const totalCrystals = 3;
+        const crystalsCountSpan = document.getElementById('crystals-count');
+        
+        function updateQuestUI() {
+            crystalsCountSpan.innerText = `${collectedCrystals}/${totalCrystals}`;
+            if (collectedCrystals === totalCrystals && !questCompleted) {
+                questCompleted = true;
+                showNotif("✨ ПРОКЛЯТИЕ СНЯТО! ТЫ ПОБЕДИЛ! ✨ Нажми Esc и перезапусти для новой игры", 7000);
+                const victoryMsg = document.createElement('div');
+                victoryMsg.style.position = 'absolute';
+                victoryMsg.style.top = '40%';
+                victoryMsg.style.left = '50%';
+                victoryMsg.style.transform = 'translate(-50%, -50%)';
+                victoryMsg.style.color = 'gold';
+                victoryMsg.style.fontSize = '40px';
+                victoryMsg.style.fontWeight = 'bold';
+                victoryMsg.style.textShadow = '0 0 20px red';
+                victoryMsg.style.zIndex = '50';
+                victoryMsg.style.backgroundColor = 'rgba(0,0,0,0.7)';
+                victoryMsg.style.padding = '20px';
+                victoryMsg.style.borderRadius = '20px';
+                victoryMsg.style.fontFamily = 'monospace';
+                victoryMsg.innerText = '🔮 ВЫХОД ОТКРЫТ! ТЫ СПАСЕН! 🔮';
+                document.body.appendChild(victoryMsg);
+                setTimeout(() => victoryMsg.remove(), 8000);
+                // блокируем дальнейшие скримеры и сбор
+            }
+        }
+        
+        // Коллизия (оптимизированная)
+        function checkCollisionWithWalls(newPos) {
+            const playerRadius = 0.45;
+            const playerHeight = 1.6;
+            for (let wall of walls) {
+                const half = wall.halfSize;
+                const wallMin = new THREE.Vector3(wall.pos.x - half.x, wall.pos.y - half.y, wall.pos.z - half.z);
+                const wallMax = new THREE.Vector3(wall.pos.x + half.x, wall.pos.y + half.y, wall.pos.z + half.z);
+                const playerMin = new THREE.Vector3(newPos.x - playerRadius, newPos.y - 0.2, newPos.z - playerRadius);
+                const playerMax = new THREE.Vector3(newPos.x + playerRadius, newPos.y + playerHeight, newPos.z + playerRadius);
+                if (playerMax.x > wallMin.x && playerMin.x < wallMax.x &&
+                    playerMax.z > wallMin.z && playerMin.z < wallMax.z &&
+                    playerMax.y > wallMin.y && playerMin.y < wallMax.y) {
+                    return true;
+                }
+            }
+            // границы мира (безвыход за периметр)
+            if (Math.abs(newPos.x) > 12.8 || Math.abs(newPos.z) > 12.8) return true;
+            return false;
+        }
+        
+        // Сбор кристаллов
+        function checkPickupCrystals(playerPos) {
+            for (let i = 0; i < crystals.length; i++) {
+                const crystal = crystals[i];
+                if (crystal.userData.collected) continue;
+                const dist = playerPos.distanceTo(crystal.position);
+                if (dist < 1.2) {
+                    crystal.userData.collected = true;
+                    scene.remove(crystal);
+                    collectedCrystals++;
+                    updateQuestUI();
+                    showNotif(`🔮 КРИСТАЛЛ ${collectedCrystals}/${totalCrystals} СОБРАН!`, 1500);
+                    // ЕСЛИ ЭТО ВТОРОЙ КРИСТАЛЛ - ПОСШАЛКА (ДОП ЭФФЕКТ)
+                    if (collectedCrystals === 2) {
+                        triggerJumpScare("ЗАПРЕТНЫЙ КРИСТАЛЛ ПРОБУДИЛ ДРЕВНЕГО! 👻");
+                    }
+                    // если собираем последний кристалл - не скример, а радость
+                    if (collectedCrystals === totalCrystals) {
+                        showNotif("ВСЕ КРИСТАЛЛЫ СОБРАНЫ! ПОБЕДА!", 2500);
+                    }
+                    break;
+                }
+            }
+        }
+        
+        // Проверка зон скримеров
+        function checkScareZones(playerPos) {
+            if (questCompleted) return;
+            for (let zone of scareZones) {
+                if (!zone.triggered) {
+                    const dist = playerPos.distanceTo(zone.pos);
+                    if (dist < zone.radius) {
+                        zone.triggered = true;
+                        triggerJumpScare(zone.message);
+                        // блокируем повторный скример в этой зоне
+                    }
+                }
+            }
+        }
+        
+        // --- АНИМАЦИЯ КРИСТАЛЛОВ (лёгкое вращение и полет) ---
+        let time = 0;
+        
+        // --- ДВИЖЕНИЕ ИГРОКА (с коллизией) ---
+        function updateMovement(deltaTime) {
+            if (questCompleted) return;
+            const actualSpeed = playerSpeed * deltaTime;
+            const cameraDirection = controls.getDirection(new THREE.Vector3());
+            const right = new THREE.Vector3();
+            right.crossVectors(cameraDirection, new THREE.Vector3(0, 1, 0));
+            right.y = 0;
+            right.normalize();
+            let moveDelta = new THREE.Vector3(0, 0, 0);
+            if (moveState.forward) moveDelta.z -= actualSpeed;
+            if (moveState.backward) moveDelta.z += actualSpeed;
+            if (moveState.left) moveDelta.x -= actualSpeed;
+            if (moveState.right) moveDelta.x += actualSpeed;
+            
+            // преобразуем относительно камеры
+            const moveWorld = new THREE.Vector3();
+            moveWorld.x = moveDelta.x * right.x + moveDelta.z * cameraDirection.x;
+            moveWorld.z = moveDelta.x * right.z + moveDelta.z * cameraDirection.z;
+            
+            let newPos = camera.position.clone();
+            newPos.x += moveWorld.x;
+            newPos.z += moveWorld.z;
+            
+            // проверка коллизий
+            if (!checkCollisionWithWalls(newPos)) {
+                camera.position.x = newPos.x;
+                camera.position.z = newPos.z;
+            } else {
+                // пробуем отдельно по оси X и Z для скольжения
+                let tryX = camera.position.clone();
+                tryX.x += moveWorld.x;
+                if (!checkCollisionWithWalls(tryX)) camera.position.x = tryX.x;
+                let tryZ = camera.position.clone();
+                tryZ.z += moveWorld.z;
+                if (!checkCollisionWithWalls(tryZ)) camera.position.z = tryZ.z;
+            }
+            
+            // проверяем сбор и скримеры после движения
+            checkPickupCrystals(camera.position);
+            checkScareZones(camera.position);
+        }
+        
+        // Добавим партиклы для настроения (оптимизировано)
+        const particleGeo = new THREE.BufferGeometry();
+        const particleCount = 180;
+        const particlePositions = new Float32Array(particleCount * 3);
+        for (let i = 0; i < particleCount; i++) {
+            particlePositions[i*3] = (Math.random() - 0.5) * 40;
+            particlePositions[i*3+1] = Math.random() * 5;
+            particlePositions[i*3+2] = (Math.random() - 0.5) * 30;
+        }
+        particleGeo.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
+        const particleMat = new THREE.PointsMaterial({ color: 0xaa77ff, size: 0.08, transparent: true, opacity: 0.5 });
+        const particles = new THREE.Points(particleGeo, particleMat);
+        scene.add(particles);
+        
+        // --- ЗАПУСК ИГРЫ ПОСЛЕ СТАРТОВОЙ ПАНЕЛИ ---
+        const startPanel = document.getElementById('start-panel');
+        const startBtn = document.getElementById('start-btn');
+        
+        function startGame() {
+            startPanel.style.display = 'none';
+            controls.lock();
+            initAudio();
+            // аудио контекст должен быть запущен по жесту
+            if (audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            showNotif("Ты в проклятом склепе! Найди 3 кристалла, избегай красных зон...", 4000);
+        }
+        
+        startBtn.addEventListener('click', () => {
+            startGame();
+        });
+        
+        // Если клик по панели, тоже запуск
+        startPanel.addEventListener('click', (e) => {
+            if (e.target === startBtn) return;
+            startGame();
+        });
+        
+        // Переключение блокировки мыши
+        controls.addEventListener('lock', () => {
+            // готово
+        });
+        
+        // --- АНИМАЦИОННЫЙ ЦИКЛ (ОПТИМИЗИРОВАННЫЙ) ---
+        let lastTime = performance.now();
+        
+        function animate() {
+            const now = performance.now();
+            let delta = Math.min(0.033, (now - lastTime) / 1000);
+            lastTime = now;
+            
+            updateMovement(delta);
+            
+            // Вращение и покачивание кристаллов
+            time += delta;
+            crystals.forEach(crystal => {
+                if (!crystal.userData.collected) {
+                    crystal.rotation.y = time * 2;
+                    crystal.rotation.x = Math.sin(time * 2.5) * 0.3;
+                    crystal.position.y = 0.7 + Math.sin(time * 5 + crystal.userData.floatOffset) * 0.08;
+                }
+            });
+            
+            // летающие частицы медленно движутся
+            particles.rotation.y += 0.002;
+            particles.rotation.x = Math.sin(time * 0.1) * 0.05;
+            
+            // Динамические огоньки мерцание (небольшое)
+            firePositions.forEach(([x, z], idx) => {
+                const flicker = 0.5 + Math.sin(time * 12 + idx) * 0.2;
+                const lightObj = scene.children.find(c => c instanceof THREE.PointLight && c.position.x === x && c.position.z === z);
+                if (lightObj) lightObj.intensity = flicker * 0.7;
+            });
+            
+            renderer.render(scene, camera);
+            requestAnimationFrame(animate);
+        }
+        
+        animate();
+        
+        // Обработка resize
+        window.addEventListener('resize', onWindowResize, false);
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+        
+        // Инструкция при потере фокуса мыши
+        console.log("3D Квест с оптимизацией и скримерами загружен!");
+    </script>
+</body>
+  </html>
