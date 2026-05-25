@@ -3,683 +3,774 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>3D КВЕСТ - ПРОКЛЯТЫЕ КРИСТАЛЛЫ | ХОРРОР КВЕСТ</title>
+    <title>Minecraft: Зомби-гонка на выживание | Шутер + Гонки + Выживание</title>
     <style>
-        body {
+        * {
             margin: 0;
-            overflow: hidden;
-            font-family: 'Courier New', monospace;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
         }
-        #info {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            background: rgba(0,0,0,0.75);
-            color: #ffcc00;
-            padding: 12px 20px;
-            border-radius: 8px;
+
+        body {
+            background: linear-gradient(145deg, #1a3f2c 0%, #0e2a1c 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Courier New', 'Minecraft', 'Monaco', monospace;
+            padding: 20px;
+        }
+
+        .game-container {
+            background: #2d2d2d;
+            border-radius: 32px;
+            padding: 20px;
+            box-shadow: 0 20px 35px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1);
+            border: 3px solid #8b5a2b;
+        }
+
+        canvas {
+            display: block;
+            margin: 0 auto;
+            border-radius: 20px;
+            box-shadow: 0 0 0 4px #5c3e1f, 0 10px 25px black;
+            cursor: crosshair;
+        }
+
+        .info-panel {
+            margin-top: 18px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            background: #1f1a12e6;
             backdrop-filter: blur(4px);
-            pointer-events: none;
-            z-index: 10;
-            border-left: 4px solid #ff5500;
-            font-weight: bold;
-            text-shadow: 1px 1px 0 #000;
-            box-shadow: 0 0 15px rgba(0,0,0,0.5);
-        }
-        #quest-log {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background: rgba(0,0,0,0.8);
-            color: #0f0;
-            padding: 12px 20px;
-            border-radius: 8px;
-            font-size: 18px;
-            font-weight: bold;
-            font-family: monospace;
-            pointer-events: none;
-            z-index: 10;
-            border-right: 3px solid #ffaa00;
-            text-align: right;
-            backdrop-filter: blur(4px);
-        }
-        #controls-guide {
-            position: absolute;
-            bottom: 20px;
-            left: 20px;
-            background: rgba(0,0,0,0.6);
-            color: #ccc;
-            padding: 8px 15px;
-            border-radius: 8px;
-            font-size: 14px;
-            pointer-events: none;
-            z-index: 10;
-            font-family: monospace;
-        }
-        #notification {
-            position: absolute;
-            bottom: 30%;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0,0,0,0.85);
-            color: #ffaa44;
             padding: 12px 24px;
+            border-radius: 60px;
+            border: 1px solid #f5c542;
+            font-weight: bold;
+            text-shadow: 2px 2px 0 #2c2c2c;
+        }
+
+        .stats {
+            display: flex;
+            gap: 28px;
+            flex-wrap: wrap;
+            color: #ffec9f;
+            background: #00000077;
+            padding: 5px 15px;
+            border-radius: 32px;
+        }
+
+        .stat {
+            background: #2a2418;
+            padding: 5px 14px;
             border-radius: 40px;
-            font-size: 20px;
+            font-size: 1.2rem;
+            letter-spacing: 1px;
             font-weight: bold;
-            text-align: center;
-            pointer-events: none;
-            z-index: 20;
-            transition: opacity 0.3s;
-            white-space: nowrap;
-            font-family: monospace;
-            border: 1px solid #ffaa44;
-            backdrop-filter: blur(8px);
-        }
-        #jumpscare-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: black;
             display: flex;
             align-items: center;
-            justify-content: center;
-            z-index: 100;
-            pointer-events: none;
-            opacity: 0;
-            transition: opacity 0.08s ease;
-            background: radial-gradient(circle, #aa0000, #220000);
+            gap: 8px;
+            box-shadow: inset 0 1px 0 #685e48, 0 2px 5px black;
         }
-        #jumpscare-image {
-            font-size: 120px;
-            font-weight: bold;
-            color: red;
-            text-shadow: 0 0 20px darkred;
-            font-family: Impact, fantasy;
-            animation: shake 0.2s infinite;
+
+        .stat span:first-child {
+            color: #ffaa33;
         }
-        @keyframes shake {
-            0% { transform: translate(1px, 1px); }
-            100% { transform: translate(-1px, -1px); }
-        }
-        #start-panel {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.9);
-            z-index: 200;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            color: white;
+
+        .stat span:last-child {
+            color: #f0f0f0;
             font-family: monospace;
-            backdrop-filter: blur(10px);
-            cursor: pointer;
-            text-align: center;
+            font-size: 1.3rem;
+            min-width: 65px;
         }
-        #start-panel h1 {
-            font-size: 48px;
-            color: #ff5500;
-            text-shadow: 0 0 20px red;
+
+        .controls {
+            display: flex;
+            gap: 20px;
+            background: #00000099;
+            padding: 6px 18px;
+            border-radius: 40px;
+            font-size: 0.75rem;
+            color: #ffdd99;
         }
-        #start-panel p {
-            font-size: 20px;
-            margin: 10px;
-        }
-        #start-panel button {
-            margin-top: 30px;
-            padding: 12px 30px;
-            font-size: 24px;
-            background: #ff5500;
+
+        button {
+            background: #f3b33d;
             border: none;
-            color: black;
+            font-family: inherit;
             font-weight: bold;
-            border-radius: 50px;
+            font-size: 1rem;
+            padding: 6px 18px;
+            border-radius: 40px;
             cursor: pointer;
-            transition: 0.2s;
-            font-family: monospace;
+            transition: all 0.08s linear;
+            box-shadow: 0 4px 0 #7a4a1a;
+            color: #1e2a0c;
         }
-        #start-panel button:hover {
-            background: #ffaa00;
-            transform: scale(1.05);
-            box-shadow: 0 0 20px orange;
+
+        button:active {
+            transform: translateY(2px);
+            box-shadow: 0 1px 0 #7a4a1a;
         }
-        .victory {
-            color: gold;
-            font-size: 32px;
-            text-shadow: 0 0 10px lime;
+
+        @keyframes pulse {
+            0% { opacity: 0.7; text-shadow: 0 0 0px red;}
+            100% { opacity: 1; text-shadow: 0 0 6px #ff3300;}
+        }
+
+        .warning {
+            animation: pulse 0.6s infinite alternate;
+        }
+
+        @media (max-width: 850px) {
+            .stat span:last-child { min-width: 45px; font-size: 1rem; }
+            .info-panel { flex-direction: column; align-items: stretch; border-radius: 28px; }
+            .controls { justify-content: center; }
         }
     </style>
 </head>
 <body>
-    <div id="info">
-        🔮 ПРОКЛЯТЫЙ МАВЗОЛЕЙ 🔮
+<div>
+    <div class="game-container">
+        <canvas id="gameCanvas" width="1100" height="700" style="width:100%; height:auto; max-width:1100px; aspect-ratio:1100/700"></canvas>
+        <div class="info-panel">
+            <div class="stats">
+                <div class="stat"><span>❤️ ЗДОРОВЬЕ</span> <span id="hpValue">100</span></div>
+                <div class="stat"><span>💀 УБИТО</span> <span id="killCount">0</span></div>
+                <div class="stat"><span>🏁 СКОРОСТЬ</span> <span id="speedValue">0</span> <span style="font-size:0.8rem;">км/ч</span></div>
+                <div class="stat"><span>⚡ БУСТ</span> <span id="boostTimer">—</span></div>
+            </div>
+            <div class="controls">
+                🎮 W/A/S/D — газ/тормоз/поворот | 🖱️ МЫШЬ — прицел | 🔫 ЛКМ — стрельба | 🔄 R — рестарт
+            </div>
+            <button id="restartBtn">🚗 РЕСТАРТ 🧟</button>
+        </div>
     </div>
-    <div id="quest-log">
-        📜 КВЕСТ:<br>
-        🌟 СОБЕРИ КРИСТАЛЛЫ: <span id="crystals-count">0</span>/3
+    <div style="text-align: center; margin-top: 12px; font-size: 13px; color: #e3c481; font-weight: bold;">
+        ⚡ Собирай ЗОЛОТЫЕ БЛОКИ (контрольные точки) — ускорение + очки!  |  Сбивай зомби выстрелами и тараном!
     </div>
-    <div id="controls-guide">
-        🕹️ WASD - движение | 🖱️ МЫШЬ - осмотр | 🔍 Подойди к кристаллам
-    </div>
-    <div id="notification" style="opacity:0;">✨ Уведомление</div>
-    <div id="jumpscare-overlay">
-        <div id="jumpscare-image">👹 ТЫ НАРУШИЛ ЗАПРЕТ! 👹</div>
-    </div>
-    <div id="start-panel">
-        <h1>🔪 ПРОКЛЯТЫЕ КРИСТАЛЛЫ 🔪</h1>
-        <p>➤ Собери 3 древних кристалла, чтобы снять проклятие</p>
-        <p>⚠️ ОСТЕРЕГАЙСЯ: запретные зоны вызывают УЖАС ⚠️</p>
-        <p>🎧 РЕКОМЕНДУЕМ НАДЕТЬ НАУШНИКИ (скримеры)</p>
-        <button id="start-btn">⚔️ НАЧАТЬ ИГРУ ⚔️</button>
-        <p style="margin-top:30px; font-size:12px;">[После клика заблокируется курсор - игра от первого лица]</p>
-    </div>
+</div>
 
-    <!-- Import Three.js core and add-ons -->
-    <script type="importmap">
-        {
-            "imports": {
-                "three": "https://unpkg.com/three@0.128.0/build/three.module.js",
-                "three/addons/": "https://unpkg.com/three@0.128.0/examples/jsm/"
-            }
+<script>
+    (function() {
+        // ---------- CANVAS ----------
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        // оптимизация: отключаем сглаживание для пиксель-арт стиля
+        ctx.imageSmoothingEnabled = false;
+        
+        // ---------- ИГРОВЫЕ ПАРАМЕТРЫ (оптимизированные) ----------
+        let gameRunning = true;
+        let animationId = null;
+        let lastTimestamp = 0;
+        
+        // Размеры мира (границы для игрока)
+        const BOUNDS = {
+            xMin: 40, xMax: canvas.width - 40,
+            yMin: 40, yMax: canvas.height - 40
+        };
+        
+        // ---------- ИГРОК (машина/карт с физикой гоночной) ----------
+        const PLAYER_SIZE = 28;
+        let player = {
+            x: canvas.width/2,
+            y: canvas.height/2,
+            angle: 0,        // направление движения (rad)
+            velX: 0,
+            velY: 0,
+            health: 100,
+            invincibleTimer: 0,
+            boostRemaining: 0,    // секунды ускорения
+            baseMaxSpeed: 520,     // пикселей в секунду (базовая)
+            currentMaxSpeed: 520,
+            acceleration: 900,     // ускорение
+            turnSpeed: 3.6,        // базовый поворот (рад/сек)
+            frictionGround: 5.0,
+            reverseAcc: 500
+        };
+        
+        // Временные флаги управления
+        const keys = {
+            ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false,
+            KeyW: false, KeyS: false, KeyA: false, KeyD: false
+        };
+        
+        let gas = false;      // W / стрелка вверх
+        let brake = false;    // S / стрелка вниз
+        let turnLeft = false;  // A / лево
+        let turnRight = false; // D / право
+        
+        // Оружие
+        let bullets = [];
+        let shootCooldown = 0;
+        const SHOOT_DELAY = 0.12; // секунды
+        const BULLET_SPEED = 950;
+        const BULLET_DAMAGE = 34;
+        let mouseX = player.x, mouseY = player.y;
+        
+        // Зомби
+        let zombies = [];
+        let zombieSpawnTimer = 0;
+        let baseSpawnDelay = 1.2;
+        let currentSpawnDelay = 1.2;
+        let killCounter = 0;
+        
+        // Бонусы / Контрольные точки (гоночный элемент)
+        let checkpoints = [];
+        const CHECKPOINT_COUNT = 4;
+        let checkpointRespawnTimers = [];
+        
+        // ---------- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ----------
+        function updateMaxSpeed() {
+            let bonus = (player.boostRemaining > 0) ? 1.45 : 1.0;
+            let base = player.baseMaxSpeed;
+            player.currentMaxSpeed = base * bonus;
         }
-    </script>
-
-    <script type="module">
-        import * as THREE from 'three';
-        import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
-
-        // --- ИНИЦИАЛИЗАЦИЯ СЦЕНЫ С ОПТИМИЗАЦИЕЙ ---
-        const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x030318);
-        scene.fog = new THREE.FogExp2(0x030318, 0.025); // туман для производительности и атмосферы
         
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        camera.position.y = 1.6; // рост персонажа
-        
-        const renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: "high-performance" });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.shadowMap.enabled = true; // тени но ограничим
-        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-        document.body.appendChild(renderer.domElement);
-        
-        // --- ОПТИМИЗАЦИЯ: ограничение теней, только важные объекты ---
-        
-        // --- УПРАВЛЕНИЕ С БЛОКИРОВКОЙ МЫШИ ---
-        const controls = new PointerLockControls(camera, document.body);
-        const moveState = { forward: false, backward: false, left: false, right: false };
-        let playerVelocity = new THREE.Vector3(0, 0, 0);
-        let playerSpeed = 4.5;
-        
-        // Обработка нажатий клавиш
-        window.addEventListener('keydown', (e) => {
-            switch(e.code) {
-                case 'KeyW': moveState.forward = true; break;
-                case 'KeyS': moveState.backward = true; break;
-                case 'KeyA': moveState.left = true; break;
-                case 'KeyD': moveState.right = true; break;
-                default: break;
+        // Нанесение урона игроку
+        function damagePlayer(amount) {
+            if (!gameRunning) return;
+            if (player.invincibleTimer > 0) return;
+            player.health = Math.max(0, player.health - amount);
+            player.invincibleTimer = 0.65; // секунды неуязвимости
+            if (player.health <= 0) {
+                gameRunning = false;
+                player.health = 0;
             }
-        });
-        window.addEventListener('keyup', (e) => {
-            switch(e.code) {
-                case 'KeyW': moveState.forward = false; break;
-                case 'KeyS': moveState.backward = false; break;
-                case 'KeyA': moveState.left = false; break;
-                case 'KeyD': moveState.right = false; break;
-                default: break;
+            updateUI();
+        }
+        
+        // добавление убийства
+        function addKill() {
+            killCounter++;
+            updateUI();
+            // сложность растёт: спавн чаще
+            let newDelay = Math.max(0.55, 1.2 - Math.floor(killCounter / 28) * 0.08);
+            currentSpawnDelay = Math.min(0.95, newDelay);
+        }
+        
+        // рестарт игры
+        function restartGame() {
+            gameRunning = true;
+            player = {
+                x: canvas.width/2,
+                y: canvas.height/2,
+                angle: 0,
+                velX: 0,
+                velY: 0,
+                health: 100,
+                invincibleTimer: 0,
+                boostRemaining: 0,
+                baseMaxSpeed: 520,
+                currentMaxSpeed: 520,
+                acceleration: 900,
+                turnSpeed: 3.6,
+                frictionGround: 5.0,
+                reverseAcc: 500
+            };
+            updateMaxSpeed();
+            bullets = [];
+            zombies = [];
+            killCounter = 0;
+            shootCooldown = 0;
+            zombieSpawnTimer = 0.2;
+            currentSpawnDelay = 1.2;
+            // ресет чекпоинтов
+            initCheckpoints();
+            updateUI();
+            mouseX = player.x;
+            mouseY = player.y;
+        }
+        
+        // инициализация контрольных точек (золотые блоки для гонки)
+        function initCheckpoints() {
+            checkpoints = [];
+            const points = [
+                { x: 180, y: 150 },
+                { x: canvas.width-180, y: 150 },
+                { x: canvas.width-180, y: canvas.height-150 },
+                { x: 180, y: canvas.height-150 }
+            ];
+            for (let i=0; i<CHECKPOINT_COUNT; i++) {
+                checkpoints.push({
+                    x: points[i].x,
+                    y: points[i].y,
+                    radius: 22,
+                    active: true,
+                    respawnTimer: 0,
+                    id: i
+                });
             }
-        });
+            checkpointRespawnTimers = new Array(CHECKPOINT_COUNT).fill(0);
+        }
         
-        // --- МИР: ПОЛ И СТЕНЫ (низкополигональный уровень) ---
-        // Пол (прозрачная текстура, но с сеткой для стиля)
-        const floorMat = new THREE.MeshStandardMaterial({ color: 0x2a1e2c, roughness: 0.8, metalness: 0.1 });
-        const floor = new THREE.Mesh(new THREE.PlaneGeometry(28, 28), floorMat);
-        floor.rotation.x = -Math.PI / 2;
-        floor.position.y = -0.05;
-        floor.receiveShadow = true;
-        scene.add(floor);
-        
-        // Сетка-репер для стиля (опционально, не нагружает)
-        const gridHelper = new THREE.GridHelper(30, 20, 0xaa88ff, 0x442266);
-        gridHelper.position.y = -0.03;
-        scene.add(gridHelper);
-        
-        // Стены и колонны (массив коллизий)
-        const walls = [];
-        
-        function addWall(x, z, width, height, depth, color = 0x3c2a3e) {
-            const wallMat = new THREE.MeshStandardMaterial({ color: color, roughness: 0.5, metalness: 0.1 });
-            const wall = new THREE.Mesh(new THREE.BoxGeometry(width, height, depth), wallMat);
-            wall.position.set(x, height/2, z);
-            wall.receiveShadow = true;
-            wall.castShadow = true;
-            scene.add(wall);
-            walls.push({
-                pos: new THREE.Vector3(x, 0, z),
-                size: new THREE.Vector3(width, height, depth),
-                halfSize: new THREE.Vector3(width/2, height/2, depth/2)
+        // спавн зомби с учётом позиции игрока
+        function spawnZombie() {
+            if (!gameRunning) return;
+            // избегаем спавна прямо на игрока
+            let side = Math.floor(Math.random() * 4);
+            let x, y;
+            const margin = 50;
+            if (side === 0) { x = Math.random() * canvas.width; y = -margin; }
+            else if (side === 2) { x = Math.random() * canvas.width; y = canvas.height + margin; }
+            else if (side === 1) { x = canvas.width + margin; y = Math.random() * canvas.height; }
+            else { x = -margin; y = Math.random() * canvas.height; }
+            
+            // корректировка, чтоб не телепортировало внутрь игрока
+            let dx = x - player.x;
+            let dy = y - player.y;
+            let dist = Math.hypot(dx, dy);
+            if (dist < 100) {
+                x = Math.min(canvas.width+30, Math.max(-30, x + (dx>0?70:-70)));
+                y = Math.min(canvas.height+30, Math.max(-30, y + (dy>0?70:-70)));
+            }
+            let speedBase = 125 + Math.random() * 70;
+            zombies.push({
+                x: x, y: y,
+                radius: 20,
+                speed: speedBase,
+                health: 40,
+                color: '#3b6e3f'
             });
         }
         
-        // Внешние стены (периметр)
-        addWall(0, -13.5, 28, 3, 1, 0x2a1e2c);
-        addWall(0, 13.5, 28, 3, 1, 0x2a1e2c);
-        addWall(-13.5, 0, 1, 3, 28, 0x2a1e2c);
-        addWall(13.5, 0, 1, 3, 28, 0x2a1e2c);
-        
-        // Внутренние стены (лабиринт + колонны)
-        addWall(-4, -5, 1.2, 2.5, 3.5, 0x5a3e5e);
-        addWall(2, -4, 1.2, 2.5, 4, 0x5a3e5e);
-        addWall(6, 1, 1, 2.5, 5, 0x5a3e5e);
-        addWall(-1, 6, 5, 2.5, 1, 0x5a3e5e);
-        addWall(-6, 7, 1.2, 2.5, 4, 0x5a3e5e);
-        addWall(8, -3, 1, 2.5, 4, 0x5a3e5e);
-        addWall(3, 8, 4, 2.5, 1, 0x5a3e5e);
-        addWall(-7, -2, 1.2, 2.5, 5, 0x5a3e5e);
-        addWall(0, -9, 5, 2.5, 1, 0x5a3e5e);
-        addWall(-2, 10, 6, 2.5, 1, 0x5a3e5e);
-        addWall(9, 9, 1, 2.5, 4, 0x5a3e5e);
-        
-        // Добавим несколько мрачных колонн для атмосферы (тоже коллизия)
-        const pillars = [[-9, -8], [8, -7], [-8, 9], [9, 5], [-5, -10], [5, -9]];
-        pillars.forEach(([x, z]) => {
-            const pillarMat = new THREE.MeshStandardMaterial({ color: 0x4a2c4a, emissive: 0x1a0a1a });
-            const pillar = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.6, 2.2, 8), pillarMat);
-            pillar.position.set(x, 1.1, z);
-            pillar.castShadow = true;
-            pillar.receiveShadow = true;
-            scene.add(pillar);
-            walls.push({
-                pos: new THREE.Vector3(x, 0, z),
-                size: new THREE.Vector3(1, 2.2, 1),
-                halfSize: new THREE.Vector3(0.5, 1.1, 0.5)
-            });
-        });
-        
-        // --- ДЕКОРАТИВНЫЕ ЭЛЕМЕНТЫ: факелы (свет) ---
-        const firePositions = [[-8, -7], [7, -6], [-6, 8], [8, 8], [-3, -9], [4, 10]];
-        firePositions.forEach(([x, z]) => {
-            const light = new THREE.PointLight(0xff6600, 0.6, 12);
-            light.position.set(x, 1.8, z);
-            light.castShadow = false; // тени отключены для оптимизации
-            scene.add(light);
-            // маленькая сфера эффект
-            const fireGlow = new THREE.Mesh(new THREE.SphereGeometry(0.2, 6, 6), new THREE.MeshStandardMaterial({ color: 0xff4400, emissive: 0x442200 }));
-            fireGlow.position.set(x, 1.5, z);
-            scene.add(fireGlow);
-        });
-        
-        // --- ОСВЕЩЕНИЕ (настроено для атмосферы и производительности) ---
-        const ambientLight = new THREE.AmbientLight(0x221c2a);
-        scene.add(ambientLight);
-        const mainLight = new THREE.DirectionalLight(0xffccaa, 1.2);
-        mainLight.position.set(5, 12, 4);
-        mainLight.castShadow = true;
-        mainLight.receiveShadow = false;
-        mainLight.shadow.mapSize.width = 512;
-        mainLight.shadow.mapSize.height = 512;
-        scene.add(mainLight);
-        const fillLight = new THREE.PointLight(0x664477, 0.5);
-        fillLight.position.set(-3, 5, 2);
-        scene.add(fillLight);
-        const backLight = new THREE.PointLight(0x335588, 0.4);
-        backLight.position.set(0, 3, -6);
-        scene.add(backLight);
-        
-        // --- КВЕСТ: КРИСТАЛЛЫ (3 штуки) ---
-        const crystals = [];
-        const crystalPositions = [
-            { x: -5.5, z: -7.2, color: 0xff44aa },
-            { x: 7.2, z: -2.5, color: 0x44ffaa },
-            { x: -2.8, z: 8.5, color: 0xaa44ff }
-        ];
-        
-        // Функция создания кристалла (геометрия октаэдр для крутости)
-        crystalPositions.forEach((pos, idx) => {
-            const crystalMat = new THREE.MeshStandardMaterial({ color: pos.color, emissive: 0x331133, emissiveIntensity: 0.5, metalness: 0.8, roughness: 0.2 });
-            const crystalGeo = new THREE.OctahedronGeometry(0.55);
-            const crystal = new THREE.Mesh(crystalGeo, crystalMat);
-            crystal.position.set(pos.x, 0.7, pos.z);
-            crystal.castShadow = true;
-            crystal.userData = { id: idx, collected: false, floatOffset: Math.random() * Math.PI * 2 };
-            scene.add(crystal);
-            crystals.push(crystal);
-        });
-        
-        // --- ЗОНЫ ТРИГГЕРОВ ДЛЯ ПОСШАЛОК (скримеры) ---
-        const scareZones = [
-            { pos: new THREE.Vector3(-2, 0, -8.5), radius: 1.8, triggered: false, message: "Духи атакуют!" },
-            { pos: new THREE.Vector3(7, 0, 7.2), radius: 1.8, triggered: false, message: "Леденящий крик!" },
-            { pos: new THREE.Vector3(-7.5, 0, 5), radius: 1.6, triggered: false, message: "Мертвец схватил!" }
-        ];
-        
-        // ---- ЗВУКОВАЯ СИСТЕМА (синтез скримера) ----
-        let audioCtx = null;
-        let isAudioEnabled = false;
-        
-        function initAudio() {
-            if (audioCtx) return;
-            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            isAudioEnabled = true;
-        }
-        
-        function playScareSound() {
-            if (!isAudioEnabled || !audioCtx) return;
-            // Сброс контекста если suspended
-            if (audioCtx.state === 'suspended') {
-                audioCtx.resume();
+        // Обновление UI
+        function updateUI() {
+            const hpSpan = document.getElementById('hpValue');
+            const killSpan = document.getElementById('killCount');
+            const speedSpan = document.getElementById('speedValue');
+            const boostSpan = document.getElementById('boostTimer');
+            if (hpSpan) hpSpan.innerText = Math.floor(player.health);
+            if (killSpan) killSpan.innerText = killCounter;
+            let speedKmh = Math.floor(Math.hypot(player.velX, player.velY) * 0.65);
+            if (speedSpan) speedSpan.innerText = Math.min(399, speedKmh);
+            if (boostSpan) {
+                if (player.boostRemaining > 0) boostSpan.innerText = player.boostRemaining.toFixed(1)+"с";
+                else boostSpan.innerText = "—";
+                if (player.boostRemaining > 0) boostSpan.style.color = "#f9a825";
+                else boostSpan.style.color = "#ccccaa";
             }
-            const now = audioCtx.currentTime;
-            const oscillator = audioCtx.createOscillator();
-            const gainNode = audioCtx.createGain();
-            oscillator.connect(gainNode);
-            gainNode.connect(audioCtx.destination);
-            oscillator.type = 'sawtooth';
-            oscillator.frequency.setValueAtTime(880, now);
-            oscillator.frequency.exponentialRampToValueAtTime(180, now + 0.4);
-            gainNode.gain.setValueAtTime(0.45, now);
-            gainNode.gain.exponentialRampToValueAtTime(0.0001, now + 1.2);
-            oscillator.start();
-            oscillator.stop(now + 1.1);
-            // дополнительный шум
-            const noiseNode = audioCtx.createBufferSource();
-            const bufferSize = 2048;
-            const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-            const data = buffer.getChannelData(0);
-            for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 0.4;
-            noiseNode.buffer = buffer;
-            const noiseGain = audioCtx.createGain();
-            noiseNode.connect(noiseGain);
-            noiseGain.connect(audioCtx.destination);
-            noiseGain.gain.setValueAtTime(0.25, now);
-            noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.7);
-            noiseNode.start();
-            noiseNode.stop(now + 0.65);
         }
         
-        // Функция скримера с эффектами
-        let isScaring = false;
-        let scareTimeout = null;
-        function triggerJumpScare(causeMessage) {
-            if (isScaring) return;
-            isScaring = true;
-            // Визуальный оверлей
-            const overlay = document.getElementById('jumpscare-overlay');
-            const imgDiv = document.getElementById('jumpscare-image');
-            imgDiv.innerHTML = `💀 ${causeMessage} 💀`;
-            overlay.style.opacity = '1';
-            playScareSound();
-            // Тряска камеры (дрожание)
-            const originalY = camera.position.y;
-            let shakeIntensity = 0.08;
-            let shakeTime = 0;
-            const shakeInterval = setInterval(() => {
-                if (shakeTime > 0.45) {
-                    clearInterval(shakeInterval);
-                    camera.position.y = originalY;
-                    return;
-                }
-                camera.position.y = originalY + (Math.random() - 0.5) * shakeIntensity;
-                shakeTime += 0.03;
-                shakeIntensity *= 0.85;
-            }, 20);
+        // Обновление физики игрока (delta секунд)
+        function updatePlayer(deltaSec) {
+            if (!gameRunning) return;
+            // управление поворотом (A/D)
+            let turn = 0;
+            if (turnLeft) turn = -1;
+            if (turnRight) turn = 1;
+            let currentSpeed = Math.hypot(player.velX, player.velY);
+            let turnMultiplier = Math.min(1.2, 0.5 + (currentSpeed / player.currentMaxSpeed) * 1.2);
+            let turnDelta = turn * player.turnSpeed * turnMultiplier * deltaSec;
+            player.angle += turnDelta;
             
-            setTimeout(() => {
-                overlay.style.opacity = '0';
-                setTimeout(() => { isScaring = false; }, 300);
-            }, 550);
-            // Показать уведомление
-            showNotif(`⚠️ ${causeMessage} ⚠️`, 1800);
-        }
-        
-        // Уведомления
-        let notifTimeout = null;
-        function showNotif(msg, duration = 2000) {
-            const notif = document.getElementById('notification');
-            notif.innerText = msg;
-            notif.style.opacity = '1';
-            if (notifTimeout) clearTimeout(notifTimeout);
-            notifTimeout = setTimeout(() => {
-                notif.style.opacity = '0';
-            }, duration);
-        }
-        
-        // Квест система
-        let collectedCrystals = 0;
-        let questCompleted = false;
-        const totalCrystals = 3;
-        const crystalsCountSpan = document.getElementById('crystals-count');
-        
-        function updateQuestUI() {
-            crystalsCountSpan.innerText = `${collectedCrystals}/${totalCrystals}`;
-            if (collectedCrystals === totalCrystals && !questCompleted) {
-                questCompleted = true;
-                showNotif("✨ ПРОКЛЯТИЕ СНЯТО! ТЫ ПОБЕДИЛ! ✨ Нажми Esc и перезапусти для новой игры", 7000);
-                const victoryMsg = document.createElement('div');
-                victoryMsg.style.position = 'absolute';
-                victoryMsg.style.top = '40%';
-                victoryMsg.style.left = '50%';
-                victoryMsg.style.transform = 'translate(-50%, -50%)';
-                victoryMsg.style.color = 'gold';
-                victoryMsg.style.fontSize = '40px';
-                victoryMsg.style.fontWeight = 'bold';
-                victoryMsg.style.textShadow = '0 0 20px red';
-                victoryMsg.style.zIndex = '50';
-                victoryMsg.style.backgroundColor = 'rgba(0,0,0,0.7)';
-                victoryMsg.style.padding = '20px';
-                victoryMsg.style.borderRadius = '20px';
-                victoryMsg.style.fontFamily = 'monospace';
-                victoryMsg.innerText = '🔮 ВЫХОД ОТКРЫТ! ТЫ СПАСЕН! 🔮';
-                document.body.appendChild(victoryMsg);
-                setTimeout(() => victoryMsg.remove(), 8000);
-                // блокируем дальнейшие скримеры и сбор
-            }
-        }
-        
-        // Коллизия (оптимизированная)
-        function checkCollisionWithWalls(newPos) {
-            const playerRadius = 0.45;
-            const playerHeight = 1.6;
-            for (let wall of walls) {
-                const half = wall.halfSize;
-                const wallMin = new THREE.Vector3(wall.pos.x - half.x, wall.pos.y - half.y, wall.pos.z - half.z);
-                const wallMax = new THREE.Vector3(wall.pos.x + half.x, wall.pos.y + half.y, wall.pos.z + half.z);
-                const playerMin = new THREE.Vector3(newPos.x - playerRadius, newPos.y - 0.2, newPos.z - playerRadius);
-                const playerMax = new THREE.Vector3(newPos.x + playerRadius, newPos.y + playerHeight, newPos.z + playerRadius);
-                if (playerMax.x > wallMin.x && playerMin.x < wallMax.x &&
-                    playerMax.z > wallMin.z && playerMin.z < wallMax.z &&
-                    playerMax.y > wallMin.y && playerMin.y < wallMax.y) {
-                    return true;
-                }
-            }
-            // границы мира (безвыход за периметр)
-            if (Math.abs(newPos.x) > 12.8 || Math.abs(newPos.z) > 12.8) return true;
-            return false;
-        }
-        
-        // Сбор кристаллов
-        function checkPickupCrystals(playerPos) {
-            for (let i = 0; i < crystals.length; i++) {
-                const crystal = crystals[i];
-                if (crystal.userData.collected) continue;
-                const dist = playerPos.distanceTo(crystal.position);
-                if (dist < 1.2) {
-                    crystal.userData.collected = true;
-                    scene.remove(crystal);
-                    collectedCrystals++;
-                    updateQuestUI();
-                    showNotif(`🔮 КРИСТАЛЛ ${collectedCrystals}/${totalCrystals} СОБРАН!`, 1500);
-                    // ЕСЛИ ЭТО ВТОРОЙ КРИСТАЛЛ - ПОСШАЛКА (ДОП ЭФФЕКТ)
-                    if (collectedCrystals === 2) {
-                        triggerJumpScare("ЗАПРЕТНЫЙ КРИСТАЛЛ ПРОБУДИЛ ДРЕВНЕГО! 👻");
-                    }
-                    // если собираем последний кристалл - не скример, а радость
-                    if (collectedCrystals === totalCrystals) {
-                        showNotif("ВСЕ КРИСТАЛЛЫ СОБРАНЫ! ПОБЕДА!", 2500);
-                    }
-                    break;
-                }
-            }
-        }
-        
-        // Проверка зон скримеров
-        function checkScareZones(playerPos) {
-            if (questCompleted) return;
-            for (let zone of scareZones) {
-                if (!zone.triggered) {
-                    const dist = playerPos.distanceTo(zone.pos);
-                    if (dist < zone.radius) {
-                        zone.triggered = true;
-                        triggerJumpScare(zone.message);
-                        // блокируем повторный скример в этой зоне
-                    }
-                }
-            }
-        }
-        
-        // --- АНИМАЦИЯ КРИСТАЛЛОВ (лёгкое вращение и полет) ---
-        let time = 0;
-        
-        // --- ДВИЖЕНИЕ ИГРОКА (с коллизией) ---
-        function updateMovement(deltaTime) {
-            if (questCompleted) return;
-            const actualSpeed = playerSpeed * deltaTime;
-            const cameraDirection = controls.getDirection(new THREE.Vector3());
-            const right = new THREE.Vector3();
-            right.crossVectors(cameraDirection, new THREE.Vector3(0, 1, 0));
-            right.y = 0;
-            right.normalize();
-            let moveDelta = new THREE.Vector3(0, 0, 0);
-            if (moveState.forward) moveDelta.z -= actualSpeed;
-            if (moveState.backward) moveDelta.z += actualSpeed;
-            if (moveState.left) moveDelta.x -= actualSpeed;
-            if (moveState.right) moveDelta.x += actualSpeed;
+            // управление газом/тормозом
+            let forward = 0;
+            if (gas) forward = 1;
+            if (brake) forward = -0.85;
             
-            // преобразуем относительно камеры
-            const moveWorld = new THREE.Vector3();
-            moveWorld.x = moveDelta.x * right.x + moveDelta.z * cameraDirection.x;
-            moveWorld.z = moveDelta.x * right.z + moveDelta.z * cameraDirection.z;
+            let accelForce = 0;
+            if (forward > 0) {
+                accelForce = player.acceleration * forward;
+            } else if (forward < 0) {
+                accelForce = player.reverseAcc * forward;
+            }
             
-            let newPos = camera.position.clone();
-            newPos.x += moveWorld.x;
-            newPos.z += moveWorld.z;
+            // вектор ускорения в направлении угла
+            let accelX = Math.cos(player.angle) * accelForce * deltaSec;
+            let accelY = Math.sin(player.angle) * accelForce * deltaSec;
+            player.velX += accelX;
+            player.velY += accelY;
             
-            // проверка коллизий
-            if (!checkCollisionWithWalls(newPos)) {
-                camera.position.x = newPos.x;
-                camera.position.z = newPos.z;
+            // сопротивление трению
+            let friction = player.frictionGround * deltaSec;
+            if (currentSpeed > 0.1) {
+                player.velX *= (1 - friction);
+                player.velY *= (1 - friction);
             } else {
-                // пробуем отдельно по оси X и Z для скольжения
-                let tryX = camera.position.clone();
-                tryX.x += moveWorld.x;
-                if (!checkCollisionWithWalls(tryX)) camera.position.x = tryX.x;
-                let tryZ = camera.position.clone();
-                tryZ.z += moveWorld.z;
-                if (!checkCollisionWithWalls(tryZ)) camera.position.z = tryZ.z;
+                if (Math.abs(player.velX) < 0.2) player.velX = 0;
+                if (Math.abs(player.velY) < 0.2) player.velY = 0;
             }
             
-            // проверяем сбор и скримеры после движения
-            checkPickupCrystals(camera.position);
-            checkScareZones(camera.position);
-        }
-        
-        // Добавим партиклы для настроения (оптимизировано)
-        const particleGeo = new THREE.BufferGeometry();
-        const particleCount = 180;
-        const particlePositions = new Float32Array(particleCount * 3);
-        for (let i = 0; i < particleCount; i++) {
-            particlePositions[i*3] = (Math.random() - 0.5) * 40;
-            particlePositions[i*3+1] = Math.random() * 5;
-            particlePositions[i*3+2] = (Math.random() - 0.5) * 30;
-        }
-        particleGeo.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
-        const particleMat = new THREE.PointsMaterial({ color: 0xaa77ff, size: 0.08, transparent: true, opacity: 0.5 });
-        const particles = new THREE.Points(particleGeo, particleMat);
-        scene.add(particles);
-        
-        // --- ЗАПУСК ИГРЫ ПОСЛЕ СТАРТОВОЙ ПАНЕЛИ ---
-        const startPanel = document.getElementById('start-panel');
-        const startBtn = document.getElementById('start-btn');
-        
-        function startGame() {
-            startPanel.style.display = 'none';
-            controls.lock();
-            initAudio();
-            // аудио контекст должен быть запущен по жесту
-            if (audioCtx && audioCtx.state === 'suspended') {
-                audioCtx.resume();
+            // ограничение максимальной скорости (гоночный аспект)
+            let spd = Math.hypot(player.velX, player.velY);
+            let maxSp = player.currentMaxSpeed;
+            if (spd > maxSp) {
+                player.velX = (player.velX / spd) * maxSp;
+                player.velY = (player.velY / spd) * maxSp;
             }
-            showNotif("Ты в проклятом склепе! Найди 3 кристалла, избегай красных зон...", 4000);
-        }
-        
-        startBtn.addEventListener('click', () => {
-            startGame();
-        });
-        
-        // Если клик по панели, тоже запуск
-        startPanel.addEventListener('click', (e) => {
-            if (e.target === startBtn) return;
-            startGame();
-        });
-        
-        // Переключение блокировки мыши
-        controls.addEventListener('lock', () => {
-            // готово
-        });
-        
-        // --- АНИМАЦИОННЫЙ ЦИКЛ (ОПТИМИЗИРОВАННЫЙ) ---
-        let lastTime = performance.now();
-        
-        function animate() {
-            const now = performance.now();
-            let delta = Math.min(0.033, (now - lastTime) / 1000);
-            lastTime = now;
             
-            updateMovement(delta);
+            // движение
+            player.x += player.velX * deltaSec;
+            player.y += player.velY * deltaSec;
             
-            // Вращение и покачивание кристаллов
-            time += delta;
-            crystals.forEach(crystal => {
-                if (!crystal.userData.collected) {
-                    crystal.rotation.y = time * 2;
-                    crystal.rotation.x = Math.sin(time * 2.5) * 0.3;
-                    crystal.position.y = 0.7 + Math.sin(time * 5 + crystal.userData.floatOffset) * 0.08;
+            // границы
+            player.x = Math.min(BOUNDS.xMax, Math.max(BOUNDS.xMin, player.x));
+            player.y = Math.min(BOUNDS.yMax, Math.max(BOUNDS.yMin, player.y));
+            if (player.x <= BOUNDS.xMin || player.x >= BOUNDS.xMax) player.velX *= -0.5;
+            if (player.y <= BOUNDS.yMin || player.y >= BOUNDS.yMax) player.velY *= -0.5;
+            
+            // обновление буста (гоночный нитро)
+            if (player.boostRemaining > 0) {
+                player.boostRemaining -= deltaSec;
+                if (player.boostRemaining <= 0) {
+                    player.boostRemaining = 0;
+                    updateMaxSpeed();
                 }
-            });
+            }
+            updateMaxSpeed();
             
-            // летающие частицы медленно движутся
-            particles.rotation.y += 0.002;
-            particles.rotation.x = Math.sin(time * 0.1) * 0.05;
-            
-            // Динамические огоньки мерцание (небольшое)
-            firePositions.forEach(([x, z], idx) => {
-                const flicker = 0.5 + Math.sin(time * 12 + idx) * 0.2;
-                const lightObj = scene.children.find(c => c instanceof THREE.PointLight && c.position.x === x && c.position.z === z);
-                if (lightObj) lightObj.intensity = flicker * 0.7;
-            });
-            
-            renderer.render(scene, camera);
-            requestAnimationFrame(animate);
+            // неуязвимость
+            if (player.invincibleTimer > 0) {
+                player.invincibleTimer -= deltaSec;
+            }
         }
         
-        animate();
-        
-        // Обработка resize
-        window.addEventListener('resize', onWindowResize, false);
-        function onWindowResize() {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
+        // Выстрелы
+        function handleShooting(deltaSec) {
+            if (!gameRunning) return;
+            if (shootCooldown > 0) shootCooldown -= deltaSec;
         }
         
-        // Инструкция при потере фокуса мыши
-        console.log("3D Квест с оптимизацией и скримерами загружен!");
-    </script>
+        function shootAtMouse() {
+            if (!gameRunning) return;
+            if (shootCooldown > 0) return;
+            let dx = mouseX - player.x;
+            let dy = mouseY - player.y;
+            let len = Math.hypot(dx, dy);
+            if (len < 0.001) return;
+            let dirX = dx / len;
+            let dirY = dy / len;
+            bullets.push({
+                x: player.x + dirX * 22,
+                y: player.y + dirY * 22,
+                vx: dirX * BULLET_SPEED,
+                vy: dirY * BULLET_SPEED,
+                life: 2.2,
+                radius: 5
+            });
+            shootCooldown = SHOOT_DELAY;
+        }
+        
+        // Обновление пуль
+        function updateBullets(deltaSec) {
+            for (let i=0; i<bullets.length; i++) {
+                let b = bullets[i];
+                b.x += b.vx * deltaSec;
+                b.y += b.vy * deltaSec;
+                b.life -= deltaSec;
+                if (b.x < -50 || b.x > canvas.width+50 || b.y < -50 || b.y > canvas.height+50 || b.life <= 0) {
+                    bullets.splice(i,1);
+                    i--;
+                    continue;
+                }
+            }
+        }
+        
+        // Зомби: ИИ преследования и коллизии
+        function updateZombies(deltaSec) {
+            for (let i=0; i<zombies.length; i++) {
+                let z = zombies[i];
+                let dx = player.x - z.x;
+                let dy = player.y - z.y;
+                let dist = Math.hypot(dx, dy);
+                if (dist > 0.01) {
+                    let move = z.speed * deltaSec;
+                    let stepX = (dx / dist) * move;
+                    let stepY = (dy / dist) * move;
+                    z.x += stepX;
+                    z.y += stepY;
+                }
+                // границы (не даём улететь далеко)
+                z.x = Math.min(canvas.width+80, Math.max(-80, z.x));
+                z.y = Math.min(canvas.height+80, Math.max(-80, z.y));
+            }
+            
+            // Столкновение зомби с игроком (урон)
+            for (let i=0; i<zombies.length; i++) {
+                let z = zombies[i];
+                let dxp = player.x - z.x;
+                let dyp = player.y - z.y;
+                let distP = Math.hypot(dxp, dyp);
+                let minDist = PLAYER_SIZE/1.8 + z.radius/1.5;
+                if (distP < minDist && gameRunning) {
+                    damagePlayer(17);
+                    let angleKnock = Math.atan2(dyp, dxp);
+                    let knockForce = 320;
+                    player.velX += Math.cos(angleKnock) * knockForce;
+                    player.velY += Math.sin(angleKnock) * knockForce;
+                    // зомби отскакивает
+                    z.x += Math.cos(angleKnock) * 22;
+                    z.y += Math.sin(angleKnock) * 22;
+                }
+            }
+            
+            // Столкновение пуль с зомби
+            for (let i=0; i<bullets.length; i++) {
+                let bullet = bullets[i];
+                for (let j=0; j<zombies.length; j++) {
+                    let z = zombies[j];
+                    let dxb = bullet.x - z.x;
+                    let dyb = bullet.y - z.y;
+                    if (Math.hypot(dxb, dyb) < z.radius+4) {
+                        zombies.splice(j,1);
+                        bullets.splice(i,1);
+                        addKill();
+                        i--; break;
+                    }
+                }
+            }
+        }
+        
+        // Чекпоинты и бонусы (гоночный элемент)
+        function updateCheckpoints(deltaSec) {
+            for (let i=0; i<checkpoints.length; i++) {
+                let cp = checkpoints[i];
+                if (!cp.active) {
+                    cp.respawnTimer -= deltaSec;
+                    if (cp.respawnTimer <= 0) {
+                        cp.active = true;
+                    }
+                    continue;
+                }
+                let dx = player.x - cp.x;
+                let dy = player.y - cp.y;
+                let dist = Math.hypot(dx, dy);
+                if (dist < cp.radius + PLAYER_SIZE/2.2) {
+                    cp.active = false;
+                    cp.respawnTimer = 5.5; // респawn через 5.5 сек
+                    // награда: ускорение + очки здоровья + очки убийств (как бонус гонки)
+                    player.boostRemaining += 1.8;
+                    if (player.boostRemaining > 4.5) player.boostRemaining = 4.5;
+                    updateMaxSpeed();
+                    player.health = Math.min(100, player.health + 12);
+                    // добавим маленький счётчик убийств за прохождение контрольных точек (гоночный стайл)
+                    killCounter += 2;
+                    updateUI();
+                    // визуальный эффект
+                }
+            }
+        }
+        
+        // Спавн зомби (таймер)
+        function updateSpawner(deltaSec) {
+            if (!gameRunning) return;
+            zombieSpawnTimer -= deltaSec;
+            if (zombieSpawnTimer <= 0) {
+                let spawnCount = Math.min(3, 1 + Math.floor(killCounter / 70));
+                for (let i=0; i<spawnCount; i++) spawnZombie();
+                let dynamicDelay = Math.max(0.6, currentSpawnDelay - (killCounter/250));
+                zombieSpawnTimer = dynamicDelay;
+            }
+            // ограничение зомби для производительности (макс 45)
+            if (zombies.length > 55) zombies = zombies.slice(0, 55);
+        }
+        
+        // ----- ОТРИСОВКА (пиксельный майнкрафт-стиль + оптимизация) -----
+        function draw() {
+            if (!ctx) return;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            // фон - травяной блок
+            ctx.fillStyle = "#5b8c4e";
+            ctx.fillRect(0,0, canvas.width, canvas.height);
+            for (let i=0; i<canvas.width+32; i+=48) {
+                ctx.fillStyle = "#7caf5a";
+                ctx.fillRect(i,0,24,canvas.height);
+                ctx.fillStyle = "#6a9e48";
+                ctx.fillRect(i+24,0,24,canvas.height);
+            }
+            // Сетка как в майнкрафте
+            ctx.strokeStyle = "#3d5a2b";
+            ctx.lineWidth = 1;
+            for (let i=0; i<canvas.width; i+=50){
+                ctx.beginPath();
+                ctx.moveTo(i,0);
+                ctx.lineTo(i,canvas.height);
+                ctx.stroke();
+                ctx.moveTo(0,i);
+                ctx.lineTo(canvas.width,i);
+                ctx.stroke();
+            }
+            
+            // контрольные точки (золотые блоки с анимацией)
+            for (let cp of checkpoints) {
+                if (!cp.active) {
+                    ctx.fillStyle = "#6b4c2e88";
+                    ctx.beginPath();
+                    ctx.arc(cp.x, cp.y, cp.radius-4, 0, Math.PI*2);
+                    ctx.fill();
+                    continue;
+                }
+                ctx.shadowBlur = 8;
+                ctx.fillStyle = "#f6c358";
+                ctx.beginPath();
+                ctx.rect(cp.x-14, cp.y-14, 28,28);
+                ctx.fill();
+                ctx.fillStyle = "#d4a017";
+                ctx.beginPath();
+                ctx.rect(cp.x-8, cp.y-8, 16,16);
+                ctx.fill();
+                ctx.fillStyle = "#ffdf80";
+                ctx.font = "bold 20 monospace";
+                ctx.fillText("⭐", cp.x-9, cp.y+8);
+                ctx.shadowBlur = 0;
+            }
+            
+            // зомби
+            for (let z of zombies) {
+                ctx.fillStyle = "#3c8c40";
+                ctx.shadowBlur = 2;
+                ctx.fillRect(z.x-16, z.y-16, 32,32);
+                ctx.fillStyle = "#2b5e2b";
+                ctx.fillRect(z.x-12, z.y-10, 24,8);
+                ctx.fillStyle = "#000000";
+                ctx.fillRect(z.x-8, z.y-6, 6,6);
+                ctx.fillRect(z.x+2, z.y-6, 6,6);
+                ctx.fillStyle = "#3a2a1f";
+                ctx.fillRect(z.x-4, z.y+2, 8,5);
+                ctx.fillStyle = "#8b5a2b";
+                ctx.fillRect(z.x-10, z.y+6, 20,6);
+            }
+            
+            // пули
+            for (let b of bullets) {
+                ctx.fillStyle = "#ffcc44";
+                ctx.beginPath();
+                ctx.arc(b.x, b.y, 5,0,Math.PI*2);
+                ctx.fill();
+                ctx.fillStyle = "#ff9900";
+                ctx.beginPath();
+                ctx.arc(b.x, b.y, 2.5,0,Math.PI*2);
+                ctx.fill();
+            }
+            
+            // игрок (гоночная машина/стиль майнкарт)
+            ctx.save();
+            ctx.translate(player.x, player.y);
+            ctx.rotate(player.angle);
+            ctx.fillStyle = "#3c6a9e";
+            ctx.shadowBlur = 4;
+            ctx.fillRect(-15, -12, 30, 24);
+            ctx.fillStyle = "#2c4a6e";
+            ctx.fillRect(-8, -18, 16, 10);
+            ctx.fillStyle = "#c99e3f";
+            ctx.fillRect(-4, -6, 8, 10);
+            ctx.fillStyle = "#eee5c4";
+            ctx.fillRect(-12, -4, 6, 6);
+            ctx.fillRect(6, -4, 6, 6);
+            ctx.fillStyle = "#c04120";
+            ctx.fillRect(-14, 0, 28, 6);
+            ctx.fillStyle = "#adadad";
+            ctx.fillRect(-18, -8, 6, 12);
+            ctx.fillRect(12, -8, 6, 12);
+            ctx.restore();
+            
+            // отображение прицела
+            ctx.beginPath();
+            ctx.arc(mouseX, mouseY, 8, 0, Math.PI*2);
+            ctx.strokeStyle = "white";
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(mouseX-14, mouseY);
+            ctx.lineTo(mouseX-6, mouseY);
+            ctx.moveTo(mouseX+6, mouseY);
+            ctx.lineTo(mouseX+14, mouseY);
+            ctx.moveTo(mouseX, mouseY-14);
+            ctx.lineTo(mouseX, mouseY-6);
+            ctx.moveTo(mouseX, mouseY+6);
+            ctx.lineTo(mouseX, mouseY+14);
+            ctx.stroke();
+            
+            if (!gameRunning) {
+                ctx.font = "bold 34px 'Courier New'";
+                ctx.fillStyle = "#ff3a2f";
+                ctx.shadowBlur = 0;
+                ctx.fillText("💀 GAME OVER 💀", canvas.width/2-180, canvas.height/2-40);
+                ctx.font = "20px monospace";
+                ctx.fillStyle = "#efd780";
+                ctx.fillText("Нажми R или кнопку РЕСТАРТ", canvas.width/2-170, canvas.height/2+40);
+            }
+            ctx.shadowBlur = 0;
+        }
+        
+        // ---- Главный цикл с delta time и оптимизацией ----
+        let lastFrameTime = 0;
+        function gameLoop(nowMs) {
+            if (!lastFrameTime) lastFrameTime = nowMs;
+            let delta = Math.min(0.033, (nowMs - lastFrameTime) / 1000);
+            if (delta <= 0) { lastFrameTime = nowMs; requestAnimationFrame(gameLoop); return; }
+            lastFrameTime = nowMs;
+            
+            if (gameRunning) {
+                updatePlayer(delta);
+                handleShooting(delta);
+                updateBullets(delta);
+                updateZombies(delta);
+                updateCheckpoints(delta);
+                updateSpawner(delta);
+                updateUI();
+            }
+            draw();
+            animationId = requestAnimationFrame(gameLoop);
+        }
+        
+        // ---- События ввода для ПК оптимизация ----
+        function handleKeyDown(e) {
+            let code = e.code;
+            if (keys.hasOwnProperty(code)) keys[code] = true;
+            if (code === 'KeyW' || code === 'ArrowUp') gas = true;
+            if (code === 'KeyS' || code === 'ArrowDown') brake = true;
+            if (code === 'KeyA' || code === 'ArrowLeft') turnLeft = true;
+            if (code === 'KeyD' || code === 'ArrowRight') turnRight = true;
+            if (code === 'KeyR') { restartGame(); e.preventDefault(); }
+            if (code === 'Space') { e.preventDefault(); }
+        }
+        
+        function handleKeyUp(e) {
+            let code = e.code;
+            if (keys.hasOwnProperty(code)) keys[code] = false;
+            if (code === 'KeyW' || code === 'ArrowUp') gas = false;
+            if (code === 'KeyS' || code === 'ArrowDown') brake = false;
+            if (code === 'KeyA' || code === 'ArrowLeft') turnLeft = false;
+            if (code === 'KeyD' || code === 'ArrowRight') turnRight = false;
+        }
+        
+        function handleMouseMove(e) {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            let canvasX = (e.clientX - rect.left) * scaleX;
+            let canvasY = (e.clientY - rect.top) * scaleY;
+            mouseX = Math.min(canvas.width, Math.max(0, canvasX));
+            mouseY = Math.min(canvas.height, Math.max(0, canvasY));
+        }
+        
+        function handleShootEvent(e) {
+            e.preventDefault();
+            shootAtMouse();
+        }
+        
+        window.addEventListener('load', () => {
+            initCheckpoints();
+            restartGame();
+            for(let i=0;i<3;i++) spawnZombie();
+            zombieSpawnTimer = 0.6;
+            updateUI();
+            animationId = requestAnimationFrame(gameLoop);
+        });
+        
+        document.addEventListener('keydown', handleKeyDown);
+        document.addEventListener('keyup', handleKeyUp);
+        canvas.addEventListener('mousemove', handleMouseMove);
+        canvas.addEventListener('mousedown', handleShootEvent);
+        canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+        document.getElementById('restartBtn').addEventListener('click', () => restartGame());
+    })();
+</script>
 </body>
-  </html>
+</html>
